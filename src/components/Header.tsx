@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { FaUpload } from 'react-icons/fa';
 
 export default function Header() {
   return (
@@ -17,11 +20,8 @@ export default function Header() {
             shadow-[0_2px_8px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_4px_12px_-3px_rgba(0,0,0,0.4)]
             font-medium text-sm whitespace-nowrap gap-1 md:gap-2"
         >
-          <span>PDF</span>
-          <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-          <span>FlipBook</span>
+          <FaUpload className="w-4 h-4 md:w-5 md:h-5" />
+          <span>Upload PDF</span>
         </Link>
       </div>
     </header>
