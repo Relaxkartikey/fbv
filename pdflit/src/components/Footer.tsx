@@ -5,7 +5,7 @@ export default function Footer() {
         <p className="text-gray-600 text-sm">
           Developed By{' '}
           <a 
-            href="https://twitter.com/RelaxKartikey" 
+            href="https://kartikey.tech" 
             target="_blank" 
             rel="noopener noreferrer"
             className="font-medium text-gray-800 hover:text-gray-600 transition-colors"
@@ -14,14 +14,13 @@ export default function Footer() {
           </a>
           {' '} | {' '}
           <span>
-            Contributor:{' '}
             <a 
-              href="https://github.com/Anag" 
+              href="https://anag.tech" 
               target="_blank" 
               rel="noopener noreferrer"
               className="font-medium text-gray-800 hover:text-gray-600 transition-colors"
             >
-              Anag
+              @AnagAggarwal
             </a>
           </span>
         </p>
