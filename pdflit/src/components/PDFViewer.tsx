@@ -6,25 +6,64 @@ interface PDFViewerProps {
   url: string;
 }
 
+// Define types for DFLIP
+interface DFlipDefaults {
+  enableSound: boolean;
+  webgl: boolean;
+  singlePageMode: boolean;
+  autoEnableOutline: boolean;
+  autoEnableThumbnail: boolean;
+  maxTextureSize: number;
+  mobileViewMode: number;
+  height: string;
+  paddingLeft: number;
+  paddingRight: number;
+  paddingTop: number;
+  paddingBottom: number;
+  zoomRatio: number;
+  backgroundColor: string;
+}
+
+interface DFlip {
+  defaults: DFlipDefaults;
+  createBook: (selector: string, options: DFlipBookOptions) => void;
+}
+
+interface DFlipBookOptions {
+  source: string;
+  id: string;
+  height: string;
+  paddingTop: number;
+  paddingBottom: number;
+}
+
+interface WindowWithDFlip extends Window {
+  DFLIP: DFlip;
+}
+
 export default function PDFViewer({ url }: PDFViewerProps) {
   useEffect(() => {
     const configureDFlip = () => {
-      if (typeof window !== 'undefined' && (window as any).DFLIP) {
+      if (typeof window !== 'undefined') {
+        const dflip = (window as unknown as WindowWithDFlip).DFLIP;
+        if (!dflip) return;
+
         const isMobile = window.innerWidth < 768;
-        (window as any).DFLIP.defaults.enableSound = false;
-        (window as any).DFLIP.defaults.webgl = true;
-        (window as any).DFLIP.defaults.singlePageMode = isMobile;
-        (window as any).DFLIP.defaults.autoEnableOutline = false;
-        (window as any).DFLIP.defaults.autoEnableThumbnail = false;
-        (window as any).DFLIP.defaults.maxTextureSize = 1600;
-        (window as any).DFLIP.defaults.mobileViewMode = 1;
-        (window as any).DFLIP.defaults.height = 'calc(100vh - 50px)';
-        (window as any).DFLIP.defaults.paddingLeft = isMobile ? 0 : 20;
-        (window as any).DFLIP.defaults.paddingRight = isMobile ? 0 : 20;
-        (window as any).DFLIP.defaults.paddingTop = 10;
-        (window as any).DFLIP.defaults.paddingBottom = 10;
-        (window as any).DFLIP.defaults.zoomRatio = 1.5;
-        (window as any).DFLIP.defaults.backgroundColor = 'transparent';
+        
+        dflip.defaults.enableSound = false;
+        dflip.defaults.webgl = true;
+        dflip.defaults.singlePageMode = isMobile;
+        dflip.defaults.autoEnableOutline = false;
+        dflip.defaults.autoEnableThumbnail = false;
+        dflip.defaults.maxTextureSize = 1600;
+        dflip.defaults.mobileViewMode = 1;
+        dflip.defaults.height = 'calc(100vh - 50px)';
+        dflip.defaults.paddingLeft = isMobile ? 0 : 20;
+        dflip.defaults.paddingRight = isMobile ? 0 : 20;
+        dflip.defaults.paddingTop = 10;
+        dflip.defaults.paddingBottom = 10;
+        dflip.defaults.zoomRatio = 1.5;
+        dflip.defaults.backgroundColor = 'transparent';
       }
     };
 
@@ -38,7 +77,10 @@ export default function PDFViewer({ url }: PDFViewerProps) {
       const viewer = document.getElementById('pdf_book');
       if (viewer) {
         viewer.innerHTML = '';
-        (window as any).DFLIP.createBook('#pdf_book', {
+        const dflip = (window as unknown as WindowWithDFlip).DFLIP;
+        if (!dflip) return;
+
+        dflip.createBook('#pdf_book', {
           source: url,
           id: 'pdf_book',
           height: 'calc(100vh - 50px)',
@@ -66,7 +108,7 @@ export default function PDFViewer({ url }: PDFViewerProps) {
           height: 'calc(100vh - 50px)',
           marginTop: '10px'
         }}
-        source={url}
+        data-source={url}
         id="pdf_book"
       />
     </div>
