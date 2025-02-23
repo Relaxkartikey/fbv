@@ -21,15 +21,10 @@ export async function GET(
     const pdf = await prisma.pDF.findFirst({
       where: {
         OR: [
-          { viewId: id },
+          { id: id },
           { shareId: id }
         ]
       },
-      select: {
-        data: true,
-        pages: true,
-        title: true,
-      }
     });
 
     if (!pdf) {
@@ -38,15 +33,11 @@ export async function GET(
         { status: 404 }
       );
     }
-
-    // Convert Buffer to base64
-    const base64Data = Buffer.from(pdf.data).toString('base64');
     
     return NextResponse.json({
       success: true,
-      data: base64Data,
-      pages: pdf.pages,
-      title: pdf.title,
+      fileUrl: pdf.fileUrl,
+      filename: pdf.filename,
     });
   } catch (error) {
     console.error('Retrieval error:', error);
