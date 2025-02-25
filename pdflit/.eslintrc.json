@@ -1,0 +1,7 @@
+{
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "@next/next/no-css-tags": "off",
+    "@typescript-eslint/no-explicit-any": "off"
+  }
+} 
