@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import DFlipScripts from "@/components/DFlipScripts";
+import Script from "next/script";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -21,19 +22,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={geist.className}>
-      <head>
-        {/* Add DFlip CSS files */}
-        <link 
-          rel="stylesheet" 
-          href="/css/dflip.min.css"
-          precedence="default"
-        />
-        <link 
-          rel="stylesheet" 
-          href="/css/themify-icons.min.css"
-          precedence="default"
-        />
-      </head>
       <body className="flex min-h-screen flex-col bg-background">
         <Header />
         <main className="flex-1 bg-gray-50/50">
@@ -41,6 +29,19 @@ export default function RootLayout({
         </main>
         <Footer />
         <DFlipScripts />
+        <Script id="load-dflip-css" strategy="beforeInteractive">
+          {`
+            const linkDflip = document.createElement('link');
+            linkDflip.rel = 'stylesheet';
+            linkDflip.href = '/css/dflip.min.css';
+            document.head.appendChild(linkDflip);
+
+            const linkThemify = document.createElement('link');
+            linkThemify.rel = 'stylesheet';
+            linkThemify.href = '/css/themify-icons.min.css';
+            document.head.appendChild(linkThemify);
+          `}
+        </Script>
       </body>
     </html>
   );

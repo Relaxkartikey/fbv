@@ -1,14 +1,10 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import PDFViewer from '@/components/PDFViewer';
-import { Metadata } from 'next';
-
-type Props = {
-  params: { id: string }
-}
+import type { Metadata } from 'next';
 
 export async function generateMetadata(
-  { params }: Props
+  { params }: { params: { id: string } }
 ): Promise<Metadata> {
   try {
     const pdf = await prisma.pDF.findUnique({
@@ -28,7 +24,7 @@ export async function generateMetadata(
 }
 
 export default async function ViewPage(
-  { params }: Props
+  { params }: { params: { id: string } }
 ) {
   try {
     const pdf = await prisma.pDF.findUnique({
