@@ -9,7 +9,7 @@ export default function Home() {
           Showcase Your PDFs as Flipbooks
         </h1>
         <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
-          Transform your PDFs into interactive flipbooks. Upload once, share anywhere, and experience pdf like reading a book.
+          Transform your PDFs into interactive flipbooks. Upload once, share anywhere, and experience reading like never before.
         </p>
         <Link
           href="/upload"

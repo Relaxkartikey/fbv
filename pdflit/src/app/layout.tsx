@@ -1,37 +1,37 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Geist } from "next/font/google";
 import "./globals.css";
-import ClientLayout from "@/components/ClientLayout";
-import Script from "next/script";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import DFlipScripts from "@/components/DFlipScripts";
 
-const inter = Inter({ subsets: ["latin"] });
+const geist = Geist({
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
-  title: "PDFlit - Simple PDF Viewer",
-  description: "Upload and view PDFs with ease",
+  title: "PDFlit - Simple PDF to Flipbook",
+  description: "Convert your PDFs to interactive flipbooks easily",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
-    <html lang="en">
+    <html lang="en" className={geist.className}>
       <head>
-        <style>
-          {`@import url('/dflip/css/dflip.min.css');
-            @import url('/dflip/css/themify-icons.min.css');`}
-        </style>
+        <link rel="stylesheet" href="/css/dflip.min.css" />
+        <link rel="stylesheet" href="/css/themify-icons.min.css" />
       </head>
-      <body className={inter.className}>
-        <ClientLayout>
+      <body className="flex min-h-screen flex-col bg-background">
+        <Header />
+        <main className="flex-1 bg-gray-50/50">
           {children}
-        </ClientLayout>
-        <Script src="/dflip/js/libs/jquery.min.js" strategy="beforeInteractive" />
-        <Script src="/dflip/js/libs/pdf.min.js" strategy="beforeInteractive" />
-        <Script src="/dflip/js/libs/pdf.worker.min.js" strategy="beforeInteractive" />
-        <Script src="/dflip/js/dflip.min.js" strategy="beforeInteractive" />
+        </main>
+        <Footer />
+        <DFlipScripts />
       </body>
     </html>
   );

@@ -1,116 +1,112 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface PDFViewerProps {
   url: string;
 }
 
-// Define types for DFLIP
-interface DFlipDefaults {
-  enableSound: boolean;
-  webgl: boolean;
-  singlePageMode: boolean;
-  autoEnableOutline: boolean;
-  autoEnableThumbnail: boolean;
-  maxTextureSize: number;
-  mobileViewMode: number;
-  height: string;
-  paddingLeft: number;
-  paddingRight: number;
-  paddingTop: number;
-  paddingBottom: number;
-  zoomRatio: number;
-  backgroundColor: string;
+declare global {
+  interface Window {
+    DFLIP?: any;
+    $?: JQueryStatic;
+  }
 }
 
-interface DFlip {
-  defaults: DFlipDefaults;
-  createBook: (selector: string, options: DFlipBookOptions) => void;
-}
-
-interface DFlipBookOptions {
-  source: string;
-  id: string;
-  height: string;
-  paddingTop: number;
-  paddingBottom: number;
-}
-
-interface WindowWithDFlip extends Window {
-  DFLIP: DFlip;
+interface JQueryStatic {
+  (selector: string | Element): {
+    flipBook: (url: string, options: any) => void;
+    remove: () => void;
+  };
 }
 
 export default function PDFViewer({ url }: PDFViewerProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const initialized = useRef(false);
+  const checkInterval = useRef<NodeJS.Timeout>();
+
   useEffect(() => {
-    const configureDFlip = () => {
-      if (typeof window !== 'undefined') {
-        const dflip = (window as unknown as WindowWithDFlip).DFLIP;
-        if (!dflip) return;
+    if (typeof window === 'undefined') return;
 
+    const initializeDFlip = () => {
+      if (!window.DFLIP || !window.$ || !containerRef.current) return false;
+
+      try {
         const isMobile = window.innerWidth < 768;
-        
-        dflip.defaults.enableSound = false;
-        dflip.defaults.webgl = true;
-        dflip.defaults.singlePageMode = isMobile;
-        dflip.defaults.autoEnableOutline = false;
-        dflip.defaults.autoEnableThumbnail = false;
-        dflip.defaults.maxTextureSize = 1600;
-        dflip.defaults.mobileViewMode = 1;
-        dflip.defaults.height = 'calc(100vh - 50px)';
-        dflip.defaults.paddingLeft = isMobile ? 0 : 20;
-        dflip.defaults.paddingRight = isMobile ? 0 : 20;
-        dflip.defaults.paddingTop = 10;
-        dflip.defaults.paddingBottom = 10;
-        dflip.defaults.zoomRatio = 1.5;
-        dflip.defaults.backgroundColor = 'transparent';
-      }
-    };
+        const $ = window.$;
 
-    // Initial configuration
-    configureDFlip();
+        // Remove any existing instances
+        const bookId = `pdf_book_${url.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        $(`#${bookId}`).remove();
 
-    // Handle window resize and orientation changes
-    const handleResize = () => {
-      configureDFlip();
-      // Reload the viewer to apply new settings
-      const viewer = document.getElementById('pdf_book');
-      if (viewer) {
-        viewer.innerHTML = '';
-        const dflip = (window as unknown as WindowWithDFlip).DFLIP;
-        if (!dflip) return;
+        // Create new book container
+        const bookContainer = document.createElement('div');
+        bookContainer.id = bookId;
+        containerRef.current.appendChild(bookContainer);
 
-        dflip.createBook('#pdf_book', {
-          source: url,
-          id: 'pdf_book',
-          height: 'calc(100vh - 50px)',
+        // Initialize DFlip
+        $(bookContainer).flipBook(url, {
+          webgl: true,
+          height: '100%',
+          singlePageMode: isMobile,
+          autoEnableOutline: false,
+          autoEnableThumbnail: false,
+          maxTextureSize: 1600,
+          mobileViewMode: 1,
+          paddingLeft: isMobile ? 0 : 20,
+          paddingRight: isMobile ? 0 : 20,
           paddingTop: 10,
-          paddingBottom: 10
+          paddingBottom: 10,
+          enableSound: false
         });
+
+        initialized.current = true;
+        return true;
+      } catch (error) {
+        console.error('Error initializing DFlip:', error);
+        return false;
       }
     };
 
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
+    // Try to initialize immediately
+    const tryInitialize = () => {
+      if (window.DFLIP && window.$ && !initialized.current) {
+        return initializeDFlip();
+      }
+      return false;
+    };
 
+    // First attempt
+    if (!tryInitialize()) {
+      // If first attempt fails, try again after scripts load
+      let attempts = 0;
+      checkInterval.current = setInterval(() => {
+        attempts++;
+        if (attempts > 100) { // 10 seconds
+          clearInterval(checkInterval.current);
+          console.error('Failed to load DFlip after 10 seconds');
+          return;
+        }
+        
+        if (tryInitialize()) {
+          clearInterval(checkInterval.current);
+        }
+      }, 100);
+    }
+
+    // Cleanup function
     return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
+      if (checkInterval.current) {
+        clearInterval(checkInterval.current);
+      }
+      if (window.$ && containerRef.current) {
+        window.$(`#pdf_book_${url.replace(/[^a-zA-Z0-9.-]/g, '_')}`).remove();
+      }
+      initialized.current = false;
     };
   }, [url]);
 
   return (
-    <div className="fixed inset-0 bg-white">
-      <div 
-        className="_df_book"
-        style={{ 
-          width: '100%', 
-          height: 'calc(100vh - 50px)',
-          marginTop: '10px'
-        }}
-        data-source={url}
-        id="pdf_book"
-      />
-    </div>
+    <div ref={containerRef} className="w-full h-full bg-white" />
   );
 } 

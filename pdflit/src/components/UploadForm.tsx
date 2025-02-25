@@ -1,16 +1,15 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function UploadForm() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [shareUrl, setShareUrl] = useState('');
   const [dragActive, setDragActive] = useState(false);
-  const [copied, setCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -45,46 +44,25 @@ export default function UploadForm() {
       const formData = new FormData();
       formData.append('pdf', file);
 
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', '/api/upload', true);
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
 
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) {
-          const percentComplete = Math.round((e.loaded / e.total) * 100);
-          setProgress(percentComplete);
-        }
-      };
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
 
-      xhr.onload = async () => {
-        if (xhr.status === 200) {
-          const data = JSON.parse(xhr.response);
-          setShareUrl(`${window.location.origin}/view/${data.shareId}`);
-        } else {
-          console.error('Upload failed');
-        }
-        setLoading(false);
-      };
-
-      xhr.onerror = () => {
-        console.error('Upload failed');
-        setLoading(false);
-      };
-
-      xhr.send(formData);
+      const data = await response.json();
+      router.push(`/view/${data.shareId}`);
     } catch (error) {
       console.error('Upload failed:', error);
       setLoading(false);
     }
   };
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
-  };
-
   return (
-    <div className="w-full">
+    <div className="w-full max-w-2xl mx-auto px-4">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div 
           onClick={() => inputRef.current?.click()}
@@ -156,61 +134,6 @@ export default function UploadForm() {
           )}
         </button>
       </form>
-
-      {shareUrl && (
-        <div className="mt-8 p-6 bg-white rounded-2xl border border-gray-100 
-          shadow-[0_2px_8px_-3px_rgba(0,0,0,0.1)]">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Share your flipbook
-              </label>
-              <input
-                type="text"
-                value={shareUrl}
-                readOnly
-                className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg 
-                  text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200"
-              />
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={handleCopy}
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 
-                  text-gray-800 rounded-xl hover:bg-gray-200 transition-all duration-200 
-                  flex-1 sm:flex-initial"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                    d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                </svg>
-                {copied ? 'Copied!' : 'Copy Link'}
-              </button>
-              <Link
-                href={shareUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 px-6 py-3
-                  bg-gradient-to-r from-gray-800 to-gray-700 text-white rounded-xl 
-                  hover:from-gray-700 hover:to-gray-600 transition-all duration-200
-                  flex-1 sm:flex-initial"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-                View FlipBook
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 } 
