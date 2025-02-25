@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import DFlipScripts from "@/components/DFlipScripts";
 import Script from "next/script";
 
-const geist = Geist({
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "PDFlit - Simple PDF to Flipbook",
@@ -21,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={geist.className}>
+    <html lang="en" className={inter.className}>
       <body className="flex min-h-screen flex-col bg-background">
         <Header />
         <main className="flex-1 bg-gray-50/50">
