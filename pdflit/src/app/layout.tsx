@@ -5,6 +5,10 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import DFlipScripts from "@/components/DFlipScripts";
 
+// Import DFlip CSS
+import "public/css/dflip.min.css";
+import "public/css/themify-icons.min.css";
+
 const geist = Geist({
   subsets: ["latin"],
 });
@@ -21,10 +25,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={geist.className}>
-      <head>
-        <link rel="stylesheet" href="/css/dflip.min.css" />
-        <link rel="stylesheet" href="/css/themify-icons.min.css" />
-      </head>
       <body className="flex min-h-screen flex-col bg-background">
         <Header />
         <main className="flex-1 bg-gray-50/50">

@@ -19,7 +19,7 @@ export async function generateMetadata(
       title: pdf ? `Viewing ${pdf.filename} - PDFlit` : 'PDF Not Found - PDFlit',
       description: pdf ? `Interactive flipbook view of ${pdf.filename}` : 'PDF not found',
     };
-  } catch (error) {
+  } catch {
     return {
       title: 'Error - PDFlit',
       description: 'Error loading PDF',
@@ -44,8 +44,8 @@ export default async function ViewPage(
         <PDFViewer url={pdf.fileUrl} />
       </div>
     );
-  } catch (error) {
-    console.error('Error fetching PDF:', error);
+  } catch (err) {
+    console.error('Error fetching PDF:', err);
     notFound();
   }
 } 

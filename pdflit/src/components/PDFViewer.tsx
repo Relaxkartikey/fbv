@@ -6,18 +6,35 @@ interface PDFViewerProps {
   url: string;
 }
 
+interface DFlipOptions {
+  webgl: boolean;
+  height: string;
+  singlePageMode: boolean;
+  autoEnableOutline: boolean;
+  autoEnableThumbnail: boolean;
+  maxTextureSize: number;
+  mobileViewMode: number;
+  paddingLeft: number;
+  paddingRight: number;
+  paddingTop: number;
+  paddingBottom: number;
+  enableSound: boolean;
+}
+
 declare global {
   interface Window {
-    DFLIP?: any;
+    DFLIP?: object;
     $?: JQueryStatic;
   }
 }
 
 interface JQueryStatic {
-  (selector: string | Element): {
-    flipBook: (url: string, options: any) => void;
-    remove: () => void;
-  };
+  (selector: string | Element): JQueryElement;
+}
+
+interface JQueryElement {
+  flipBook: (url: string, options: DFlipOptions) => void;
+  remove: () => void;
 }
 
 export default function PDFViewer({ url }: PDFViewerProps) {
@@ -28,8 +45,10 @@ export default function PDFViewer({ url }: PDFViewerProps) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    const currentContainer = containerRef.current;
+
     const initializeDFlip = () => {
-      if (!window.DFLIP || !window.$ || !containerRef.current) return false;
+      if (!window.DFLIP || !window.$ || !currentContainer) return false;
 
       try {
         const isMobile = window.innerWidth < 768;
@@ -42,7 +61,7 @@ export default function PDFViewer({ url }: PDFViewerProps) {
         // Create new book container
         const bookContainer = document.createElement('div');
         bookContainer.id = bookId;
-        containerRef.current.appendChild(bookContainer);
+        currentContainer.appendChild(bookContainer);
 
         // Initialize DFlip
         $(bookContainer).flipBook(url, {
@@ -99,7 +118,7 @@ export default function PDFViewer({ url }: PDFViewerProps) {
       if (checkInterval.current) {
         clearInterval(checkInterval.current);
       }
-      if (window.$ && containerRef.current) {
+      if (window.$ && currentContainer) {
         window.$(`#pdf_book_${url.replace(/[^a-zA-Z0-9.-]/g, '_')}`).remove();
       }
       initialized.current = false;
