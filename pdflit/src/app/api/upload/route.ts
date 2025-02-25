@@ -1,7 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { writeFile } from 'fs/promises';
+import path from 'path';
+import { mkdir } from 'fs/promises';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
+
+// Ensure upload directory exists
+async function ensureUploadDir() {
+  try {
+    await mkdir(UPLOAD_DIR, { recursive: true });
+  } catch (error) {
+    console.error('Error creating upload directory:', error);
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,35 +42,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    try {
-      // For now, we'll use a mock URL. In production, you would upload to a cloud storage service
-      const uniqueId = Date.now() + '-' + Math.random().toString(36).substring(2);
-      const filename = `${uniqueId}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-      const fileUrl = `https://example.com/pdfs/${filename}`; // This would be your cloud storage URL
+    // Ensure upload directory exists
+    await ensureUploadDir();
 
-      // Store in database
-      const pdf = await prisma.pDF.create({
-        data: {
-          filename: file.name,
-          fileUrl: fileUrl,
-        },
-      });
+    // Generate a unique filename
+    const uniqueId = Date.now() + '-' + Math.random().toString(36).substring(2);
+    const filename = `${uniqueId}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const filepath = path.join(UPLOAD_DIR, filename);
 
-      return NextResponse.json({
-        shareId: pdf.shareId,
-        url: `/view/${pdf.shareId}`,
-      });
-    } catch (error) {
-      console.error('Error storing PDF:', error);
-      return NextResponse.json(
-        { error: 'Failed to store PDF' },
-        { status: 500 }
-      );
-    }
+    // Convert the file to a Buffer and save it
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    await writeFile(filepath, buffer);
+
+    // Create the public URL for the file
+    const fileUrl = `/uploads/${filename}`;
+
+    const pdf = await prisma.pDF.create({
+      data: {
+        filename: file.name,
+        fileUrl: fileUrl,
+      },
+    });
+
+    return NextResponse.json({
+      shareId: pdf.shareId,
+      url: `/view/${pdf.shareId}`,
+    });
   } catch (error) {
     console.error('Upload error:', error);
     return NextResponse.json(
-      { error: 'Upload failed: ' + (error instanceof Error ? error.message : 'Unknown error') },
+      { error: 'Upload failed' },
       { status: 500 }
     );
   }
