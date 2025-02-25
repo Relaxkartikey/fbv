@@ -19,11 +19,17 @@ export async function generateMetadata({
     return {
       title: pdf ? `Viewing ${pdf.filename} - PDFlit` : 'PDF Not Found - PDFlit',
       description: pdf ? `Interactive flipbook view of ${pdf.filename}` : 'PDF not found',
+      other: {
+        layout: 'fullscreen'
+      }
     };
   } catch {
     return {
       title: 'Error - PDFlit',
       description: 'Error loading PDF',
+      other: {
+        layout: 'fullscreen'
+      }
     };
   }
 }
@@ -44,7 +50,7 @@ export default async function Page({
     }
 
     return (
-      <div className="w-full h-screen">
+      <div className="fixed inset-0 w-full h-full">
         <PDFViewer url={pdf.fileUrl} />
       </div>
     );

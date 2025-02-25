@@ -9,6 +9,8 @@ interface PDFViewerProps {
 interface DFlipOptions {
   webgl: boolean;
   height: string;
+  width: string;
+  duration: number;
   singlePageMode: boolean;
   autoEnableOutline: boolean;
   autoEnableThumbnail: boolean;
@@ -39,26 +41,30 @@ interface JQueryElement {
 
 export default function PDFViewer({ url }: PDFViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const initialized = useRef(false);
-  const checkInterval = useRef<NodeJS.Timeout>();
+  const bookInstanceRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const currentContainer = containerRef.current;
+    if (!currentContainer) return;
 
     const initializeDFlip = () => {
       if (!window.DFLIP || !window.$ || !currentContainer) return false;
 
       try {
-        const isMobile = window.innerWidth < 768;
         const $ = window.$;
+        const isMobile = window.innerWidth < 768;
 
-        // Remove any existing instances
-        const bookId = `pdf_book_${url.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-        $(`#${bookId}`).remove();
+        // Clean up any existing instances
+        if (bookInstanceRef.current) {
+          $(`#${bookInstanceRef.current}`).remove();
+        }
 
-        // Create new book container
+        // Create new book container with unique ID
+        const bookId = `pdf_book_${Date.now()}`;
+        bookInstanceRef.current = bookId;
+        
         const bookContainer = document.createElement('div');
         bookContainer.id = bookId;
         currentContainer.appendChild(bookContainer);
@@ -66,23 +72,24 @@ export default function PDFViewer({ url }: PDFViewerProps) {
         // Get the full URL for the PDF
         const fullUrl = url.startsWith('http') ? url : `${window.location.origin}${url}`;
 
-        // Initialize DFlip
+        // Initialize DFlip with responsive settings
         $(bookContainer).flipBook(fullUrl, {
           webgl: true,
           height: '100%',
+          width: '100%',
+          duration: 800,
           singlePageMode: isMobile,
           autoEnableOutline: false,
           autoEnableThumbnail: false,
           maxTextureSize: 1600,
-          mobileViewMode: 1,
-          paddingLeft: isMobile ? 0 : 20,
-          paddingRight: isMobile ? 0 : 20,
-          paddingTop: 10,
-          paddingBottom: 10,
+          mobileViewMode: 2, // Changed to 2 for better mobile view
+          paddingLeft: 0,
+          paddingRight: 0,
+          paddingTop: 0,
+          paddingBottom: 0,
           enableSound: false
         });
 
-        initialized.current = true;
         return true;
       } catch (error) {
         console.error('Error initializing DFlip:', error);
@@ -90,41 +97,36 @@ export default function PDFViewer({ url }: PDFViewerProps) {
       }
     };
 
-    // Try to initialize immediately
-    const tryInitialize = () => {
-      if (window.DFLIP && window.$ && !initialized.current) {
-        return initializeDFlip();
+    // Try to initialize with retry mechanism
+    let attempts = 0;
+    const maxAttempts = 50;
+    const interval = setInterval(() => {
+      attempts++;
+      if (attempts > maxAttempts) {
+        clearInterval(interval);
+        console.error('Failed to load DFlip');
+        return;
       }
-      return false;
+      
+      if (initializeDFlip()) {
+        clearInterval(interval);
+      }
+    }, 200);
+
+    // Handle window resize
+    const handleResize = () => {
+      initializeDFlip();
     };
 
-    // First attempt
-    if (!tryInitialize()) {
-      // If first attempt fails, try again after scripts load
-      let attempts = 0;
-      checkInterval.current = setInterval(() => {
-        attempts++;
-        if (attempts > 100) { // 10 seconds
-          clearInterval(checkInterval.current);
-          console.error('Failed to load DFlip after 10 seconds');
-          return;
-        }
-        
-        if (tryInitialize()) {
-          clearInterval(checkInterval.current);
-        }
-      }, 100);
-    }
+    window.addEventListener('resize', handleResize);
 
     // Cleanup function
     return () => {
-      if (checkInterval.current) {
-        clearInterval(checkInterval.current);
+      clearInterval(interval);
+      window.removeEventListener('resize', handleResize);
+      if (window.$ && bookInstanceRef.current) {
+        window.$(`#${bookInstanceRef.current}`).remove();
       }
-      if (window.$ && currentContainer) {
-        window.$(`#pdf_book_${url.replace(/[^a-zA-Z0-9.-]/g, '_')}`).remove();
-      }
-      initialized.current = false;
     };
   }, [url]);
 
