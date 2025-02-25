@@ -63,8 +63,9 @@ export default function PDFViewer({ url }: PDFViewerProps) {
         bookContainer.id = bookId;
         currentContainer.appendChild(bookContainer);
 
-        // Initialize DFlip
-        $(bookContainer).flipBook(url, {
+        // Initialize DFlip with proxy URL
+        const proxyUrl = `/api/proxy-pdf?url=${encodeURIComponent(url)}`;
+        $(bookContainer).flipBook(proxyUrl, {
           webgl: true,
           height: '100%',
           singlePageMode: isMobile,
