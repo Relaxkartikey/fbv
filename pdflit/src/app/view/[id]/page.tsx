@@ -3,16 +3,13 @@ import { prisma } from '@/lib/prisma';
 import PDFViewer from '@/components/PDFViewer';
 import type { Metadata } from 'next';
 
-type PageParams = { id: string };
+interface GenerateMetadataProps {
+  params: { id: string };
+}
 
-type Props = {
-  params: PageParams;
-  searchParams: Record<string, string | string[] | undefined>;
-};
-
-export async function generateMetadata(props: Props): Promise<Metadata> {
-  const { params } = props;
-  
+export async function generateMetadata(
+  { params }: GenerateMetadataProps
+): Promise<Metadata> {
   try {
     const pdf = await prisma.pDF.findUnique({
       where: { shareId: params.id },
@@ -30,9 +27,11 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   }
 }
 
-export default async function ViewPage(props: Props) {
-  const { params } = props;
-  
+interface PageProps {
+  params: { id: string };
+}
+
+export default async function page({ params }: PageProps) {
   try {
     const pdf = await prisma.pDF.findUnique({
       where: { shareId: params.id },
