@@ -1,9 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { writeFile } from 'fs/promises';
+import path from 'path';
+import { mkdir } from 'fs/promises';
 
-export const runtime = 'edge';
+// Remove edge runtime as it's causing issues with Prisma
+// export const runtime = 'edge';
 
+const prisma = new PrismaClient();
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+// Ensure upload directory exists
+async function ensureUploadDir() {
+  const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+  try {
+    await mkdir(uploadDir, { recursive: true });
+    return uploadDir;
+  } catch (error) {
+    console.error('Error creating upload directory:', error);
+    throw error;
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,13 +48,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate a mock URL for now - you'll want to implement actual file storage later
-    const mockUrl = `https://example.com/${file.name}`;
+    // Create upload directory and save file
+    const uploadDir = await ensureUploadDir();
+    const uniqueId = Date.now() + '-' + Math.random().toString(36).substring(2);
+    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const filename = `${uniqueId}-${safeName}`;
+    const filepath = path.join(uploadDir, filename);
+
+    // Convert the file to a Buffer and save it
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    await writeFile(filepath, buffer);
+
+    // Create the public URL for the file
+    const fileUrl = `/uploads/${filename}`;
 
     const pdf = await prisma.pDF.create({
       data: {
         filename: file.name,
-        fileUrl: mockUrl,
+        fileUrl: fileUrl,
       },
     });
 
@@ -48,8 +77,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Upload error:', error);
     return NextResponse.json(
-      { error: 'Upload failed' },
+      { error: 'Upload failed', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 } 

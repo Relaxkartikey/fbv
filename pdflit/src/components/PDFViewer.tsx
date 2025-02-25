@@ -63,8 +63,11 @@ export default function PDFViewer({ url }: PDFViewerProps) {
         bookContainer.id = bookId;
         currentContainer.appendChild(bookContainer);
 
+        // Get the full URL for the PDF
+        const fullUrl = url.startsWith('http') ? url : `${window.location.origin}${url}`;
+
         // Initialize DFlip
-        $(bookContainer).flipBook(url, {
+        $(bookContainer).flipBook(fullUrl, {
           webgl: true,
           height: '100%',
           singlePageMode: isMobile,
