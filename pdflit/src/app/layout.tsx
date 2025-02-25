@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Geist } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import DFlipScripts from "@/components/DFlipScripts";
 import Script from "next/script";
 
-const inter = Inter({ subsets: ["latin"] });
+const geist = Geist({
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: "PDFlit - Simple PDF to Flipbook",
@@ -19,20 +21,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.className} suppressHydrationWarning>
-      <head>
-        <link rel="stylesheet" href="/css/dflip.min.css" />
-        <link rel="stylesheet" href="/css/themify-icons.min.css" />
-      </head>
-      <body className="min-h-screen bg-background font-sans antialiased">
-        <div className="relative flex min-h-screen flex-col">
-          <Header />
-          <main className="flex-1 bg-gray-50/50">
-            {children}
-          </main>
-          <Footer />
-        </div>
+    <html lang="en" className={geist.className}>
+      <body className="flex min-h-screen flex-col bg-background">
+        <Header />
+        <main className="flex-1 bg-gray-50/50">
+          {children}
+        </main>
+        <Footer />
         <DFlipScripts />
+        <Script id="load-dflip-css" strategy="beforeInteractive">
+          {`
+            const linkDflip = document.createElement('link');
+            linkDflip.rel = 'stylesheet';
+            linkDflip.href = '/css/dflip.min.css';
+            document.head.appendChild(linkDflip);
+
+            const linkThemify = document.createElement('link');
+            linkThemify.rel = 'stylesheet';
+            linkThemify.href = '/css/themify-icons.min.css';
+            document.head.appendChild(linkThemify);
+          `}
+        </Script>
       </body>
     </html>
   );
